@@ -24,8 +24,6 @@ export default function Page() {
 
         <Selector phase={3} />
 
-        <Selector phase={4} />
-
       </div>
 
     </div>
