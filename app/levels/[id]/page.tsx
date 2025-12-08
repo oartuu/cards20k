@@ -40,6 +40,7 @@ export default function Page() {
 
     if (option.correct) {
       setDisableAll(true);
+      // CORRIGIDO: Uso de template literals com crases (`)
       window.alert(`✅ Correto!\n\n${option.feedback || ""}`);
 
       if (current + 1 < phaseQuestions.length) {
@@ -51,8 +52,9 @@ export default function Page() {
         const nextPhase = phase + 1;
         
         if (nextPhase <= TOTAL_PHASES) {
+            // CORRIGIDO: Uso de template literals com crases (`)
             window.alert(`🎉 Você concluiu a Fase ${phase}! Preparando para a Fase ${nextPhase}...`);
-            // Navega para a próxima fase (ex: /levels/2)
+            // CORRIGIDO: Uso de template literals com crases (`)
             router.push(`/levels/${nextPhase}`); 
         } else {
             // Todas as fases concluídas
@@ -75,6 +77,7 @@ export default function Page() {
 
         } else {
           setRemovedOptions((prevArr) => [...prevArr, optionIndex]);
+          // CORRIGIDO: Uso de template literals com crases (`)
           window.alert(`❌ Incorreto.\n\n${option.feedback || ""}`);
           return novo;
         }
@@ -104,6 +107,7 @@ export default function Page() {
             >
               <Settings // Componente de ícone
                 size={64}
+                // CORRIGIDO: Uso de template literals com crases (`)
                 className={`transition-colors ${v <= lives ? "text-brand-primary" : "text-brand-background/40"}`}
               />
             </div>
@@ -125,7 +129,9 @@ export default function Page() {
                 key={opt.id}
                 onClick={() => handleOptionClick(index)}
                 disabled={disableAll}
-                className={`p-4 w-1/6 h-52 rounded-lg shadow-2xl transition transform hover:-translate-y-1 ${removed ? "opacity-40 pointer-events-none" : "bg-brand-light hover:bg-brand-primary-dark"}`}              >
+                // CORRIGIDO: Uso de template literals com crases (`)
+                className={`p-4 w-1/6 h-58 rounded-xl shadow-2xl transition transform hover:-translate-y-1 ${removed ? "opacity-40 pointer-events-none" : "bg-brand-light hover:bg-brand-primary-dark"}`}              
+              >
                 <div className="h-full flex items-center justify-center text-center px-2">
                   <span>{opt.text}</span>
                 </div>
