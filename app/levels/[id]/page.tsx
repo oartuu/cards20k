@@ -128,7 +128,7 @@ export default function Page() {
                 onClick={() => handleOptionClick(index)}
                 disabled={disableAll}
                 // CORRIGIDO: Uso de template literals com crases (`)
-                className={`p-4 w-1/6 h-56 rounded-xl shadow-2xl transition transform hover:-translate-y-1 ${removed ? "opacity-40 pointer-events-none" : "bg-brand-light hover:bg-brand-primary-dark"}`}              
+                className={`p-4 w-1/6 h-58 rounded-xl shadow-2xl transition transform hover:-translate-y-1 ${removed ? "opacity-40 pointer-events-none" : "bg-brand-light hover:bg-brand-primary-dark"}`}              
               >
                 <div className="h-full flex items-center justify-center text-center px-2">
                   <span>{opt.text}</span>
