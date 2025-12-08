@@ -56,8 +56,8 @@ export default function Page() {
             router.push(`/levels/${nextPhase}`); 
         } else {
             // Todas as fases concluídas
-            window.alert(`🏆 Parabéns! Você concluiu todas as ${TOTAL_PHASES} fases!`);
             setDisableAll(true);
+            router.push("/levels/finish")
             // Opcional: router.push('/');
         }
       }
@@ -65,11 +65,14 @@ export default function Page() {
       setLives((prev) => {
         const novo = prev - 1;
         if (novo <= 0) {
-          window.alert("💥 Você perdeu todas as vidas. A fase será reiniciada.");
+        
           setCurrent(0);
           setRemovedOptions([]);
           setDisableAll(false);
+          router.push("/levels/gameover");
           return 3;
+          
+
         } else {
           setRemovedOptions((prevArr) => [...prevArr, optionIndex]);
           window.alert(`❌ Incorreto.\n\n${option.feedback || ""}`);
