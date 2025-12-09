@@ -6,6 +6,9 @@ import { questions, Question, Option } from "@/app/data/questions";
 import CardOption from "@/app/components/CardOption";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { DialogTitle } from "@radix-ui/react-dialog";
+import { Button } from "@/components/ui/button";
 
 export default function Page() {
   const { id } = useParams();
@@ -13,15 +16,19 @@ export default function Page() {
   const router = useRouter();
 
   const TOTAL_PHASES = 4;
-
   const phaseQuestions: Question[] = questions.filter((q) => q.phase === phase);
 
   const [current, setCurrent] = useState(0);
   const [lives, setLives] = useState(3);
   const [removedOptions, setRemovedOptions] = useState<number[]>([]);
   const [disableAll, setDisableAll] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
+  const [isWrong, setIsWrong] = useState(false);
+  const [isPhaseFinished, setIsPhaseFinished] = useState(false);
 
+  const [feedback, setFeedback] = useState("");
   const question = phaseQuestions[current];
+  const nextPhase = phase + 1;
 
   function handleOptionClick(optionIndex: number) {
     if (disableAll) return;
@@ -31,17 +38,16 @@ export default function Page() {
 
     if (option.correct) {
       setDisableAll(true);
-      window.alert(`✅ Correto!\n\n${option.feedback || ""}`);
+      setIsCorrect(true);
+      setFeedback(option.feedback || "");
 
       if (current + 1 < phaseQuestions.length) {
         setCurrent((c) => c + 1);
         setRemovedOptions([]);
         setDisableAll(false);
       } else {
-        const nextPhase = phase + 1;
         if (nextPhase <= TOTAL_PHASES) {
-          window.alert(`🎉 Fase ${phase} concluída! Indo para a fase ${nextPhase}...`);
-          router.push(`/levels/${nextPhase}`);
+          setIsPhaseFinished(true);
         } else {
           router.push("/levels/finish");
         }
@@ -57,8 +63,9 @@ export default function Page() {
           router.push("/levels/gameover");
           return 3;
         } else {
-          window.alert(`❌ Incorreto.\n\n${option.feedback || ""}`);
-          setRemovedOptions((x) => [...x, optionIndex]);
+          setRemovedOptions((prevArr) => [...prevArr, optionIndex]);
+          setIsWrong(true);
+          setFeedback(option.feedback || "");
           return novo;
         }
       });
@@ -111,6 +118,61 @@ export default function Page() {
 
       {/* PERGUNTA + OPÇÕES */}
       <main className="flex-4 flex flex-col justify-between items-center py-6 w-full">
+        {/* Diálogos de feedback */}
+        <Dialog open={isCorrect} onOpenChange={setIsCorrect}>
+          <DialogContent
+            className="z-110 h-48 text-center"
+            style={{
+              backgroundImage: "url('/textures/papel_antigo_carta.jpg')",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }}
+          >
+            <DialogTitle>RESPOSTA CORRETA!!</DialogTitle>
+            <p>{feedback}</p>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isWrong} onOpenChange={setIsWrong}>
+          <DialogContent
+            className="z-110 h-48 text-center"
+            style={{
+              backgroundImage: "url('/textures/papel_antigo_carta.jpg')",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }}
+          >
+            <DialogTitle>RESPOSTA INCORRETA!</DialogTitle>
+            <p>{feedback}</p>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isPhaseFinished} onOpenChange={setIsPhaseFinished}>
+          <DialogContent
+            className="z-110 h-48 text-center"
+            style={{
+              backgroundImage: "url('/textures/papel_antigo_carta.jpg')",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }}
+          >
+            <DialogTitle>FIM DE FASE!</DialogTitle>
+            <p>
+              Você concluiu a Fase {phase}! Preparando para a Fase {nextPhase}...
+            </p>
+            <Button
+              onClick={() => router.push(`/levels/${nextPhase}`)}
+              className="bg-brand-primary hover:bg-brand-primary-dark hover:cursor-pointer transition-colors duration-300"
+            >
+              Próxima Fase
+            </Button>
+          </DialogContent>
+        </Dialog>
+
+        {/* Letreiro da pergunta */}
         <motion.div
           initial={{ y: -200, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -120,6 +182,7 @@ export default function Page() {
             backgroundImage: "url('/textures/letreiro.jpg')",
             backgroundSize: "cover",
             backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
           }}
         >
           <span className="text-black text-xl font-semibold text-center">

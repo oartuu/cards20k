@@ -39,7 +39,7 @@ export default function CardOption({
       >
         {/* Frente da carta */}
         <motion.div
-          className="absolute w-full h-full rounded-2xl border flex items-center justify-center text-center font-bold text-[#2E1B00] shadow-2xl"
+          className="absolute  w-full h-full rounded-2xl border flex items-center justify-center text-center font-bold text-[#2E1B00] shadow-2xl"
           style={{
             backfaceVisibility: "hidden",
             rotateY: flipped ? 0 : 180,
