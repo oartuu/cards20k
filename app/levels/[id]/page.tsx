@@ -145,7 +145,7 @@ export default function Page() {
         style={{ width: "240px", transform: "translateX(-30px)" }}
       >
         {/* Fundo do painel (MENOR) */}
-        <div className="absolute top-0 left-0 h-full w-[240px]">
+        <div className="absolute top-0 left-0 h-full w-[230px]">
           <Image
             src="/images/fundo_engrena.png"
             alt="Painel"
