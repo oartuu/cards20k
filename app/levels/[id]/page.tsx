@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { questions, Question, Option } from "@/app/data/questions";
 import CardOption from "@/app/components/CardOption";
@@ -10,13 +10,23 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
 
+interface RandomProps {
+  volume: number;
+  pitch: number;
+}
+
 export default function Page() {
   const { id } = useParams();
   const phase = Number(id) || 1;
   const router = useRouter();
 
   const TOTAL_PHASES = 4;
-  const phaseQuestions: Question[] = questions.filter((q) => q.phase === phase);
+
+  // Memoriza perguntas para não recriar a cada render
+  const phaseQuestions: Question[] = useMemo(
+    () => questions.filter((q) => q.phase === phase),
+    [phase]
+  );
 
   const [current, setCurrent] = useState(0);
   const [lives, setLives] = useState(3);
@@ -27,9 +37,31 @@ export default function Page() {
   const [isPhaseFinished, setIsPhaseFinished] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [focusedCard, setFocusedCard] = useState<number | null>(null);
+  const [randomProps, setRandomProps] = useState<RandomProps[]>([]);
+
+  const correctAudioRef = useRef<HTMLAudioElement | null>(null);
+  const wrongAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Áudios apenas no client
+  useEffect(() => {
+    correctAudioRef.current = new Audio("/sounds/card_correct.wav");
+    correctAudioRef.current.volume = 0.4;
+
+    wrongAudioRef.current = new Audio("/sounds/card_rip.wav");
+    wrongAudioRef.current.volume = 0.4;
+  }, []);
 
   const question = phaseQuestions[current];
   const nextPhase = phase + 1;
+
+  // Gera valores aleatórios apenas quando current muda
+  useEffect(() => {
+    const props = phaseQuestions[current]?.options.map(() => ({
+      volume: 0.25 + Math.random() * 0.1,
+      pitch: 0.9 + Math.random() * 0.2,
+    }));
+    setRandomProps(props || []);
+  }, [current, phaseQuestions]);
 
   function handleOptionClick(optionIndex: number) {
     if (disableAll) return;
@@ -41,11 +73,14 @@ export default function Page() {
       setDisableAll(true);
       setIsCorrect(true);
       setFeedback(option.feedback || "");
+      correctAudioRef.current?.play();
 
       if (current + 1 < phaseQuestions.length) {
-        setCurrent((c) => c + 1);
-        setRemovedOptions([]);
-        setDisableAll(false);
+        setTimeout(() => {
+          setCurrent((c) => c + 1);
+          setRemovedOptions([]);
+          setDisableAll(false);
+        }, 500);
       } else {
         if (nextPhase <= TOTAL_PHASES) {
           setIsPhaseFinished(true);
@@ -66,13 +101,14 @@ export default function Page() {
           setRemovedOptions((prevArr) => [...prevArr, optionIndex]);
           setIsWrong(true);
           setFeedback(option.feedback || "");
+          wrongAudioRef.current?.play();
           return novo;
         }
       });
     }
   }
 
-  if (phaseQuestions.length === 0) {
+  if (!question) {
     return (
       <div className="min-h-screen flex items-center justify-center font-game">
         <p>Nenhuma pergunta encontrada para a fase {phase}.</p>
@@ -99,10 +135,10 @@ export default function Page() {
           className="absolute top-1/2 -translate-y-1/2 left-[-180px] z-0"
         >
           <Image
-            src="/images/fundo_engrenagens.png"
-            alt="fundo engrenagens"
-            width={305}
-            height={200}
+            src="/images/fundo_engrena.png"
+            alt="fundo engrena"
+            width={280}
+            height={100}
             priority
           />
         </motion.div>
@@ -122,12 +158,12 @@ export default function Page() {
 
       {/* PERGUNTA + OPÇÕES */}
       <main className="flex-4 flex flex-col justify-between items-center py-6 w-full relative">
-        {/* Diálogos de feedback */}
+        {/* DIÁLOGOS DE FEEDBACK */}
         <Dialog open={isCorrect} onOpenChange={setIsCorrect}>
           <DialogContent
             className="z-110 h-48 text-center"
             style={{
-              backgroundImage: "url('/textures/papel_antigo_carta.jpg')",
+              backgroundImage: "url('/textures/mesa_western.jpg')",
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundRepeat: "no-repeat",
@@ -142,7 +178,7 @@ export default function Page() {
           <DialogContent
             className="z-110 h-48 text-center"
             style={{
-              backgroundImage: "url('/textures/papel_antigo_carta.jpg')",
+              backgroundImage: "url('/textures/mesa_western.jpg')",
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundRepeat: "no-repeat",
@@ -157,7 +193,7 @@ export default function Page() {
           <DialogContent
             className="z-110 h-48 text-center"
             style={{
-              backgroundImage: "url('/textures/papel_antigo_carta.jpg')",
+              backgroundImage: "url('/textures/mesa_western.jpg')",
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundRepeat: "no-repeat",
@@ -176,7 +212,7 @@ export default function Page() {
           </DialogContent>
         </Dialog>
 
-        {/* Correntes esquerda e direita */}
+        {/* CORRENTES */}
         <motion.div
           initial={initialDrop}
           animate={dropAnimation}
@@ -205,7 +241,7 @@ export default function Page() {
           />
         </motion.div>
 
-        {/* Letreiro da pergunta */}
+        {/* LETREIRO */}
         <motion.div
           initial={initialDrop}
           animate={dropAnimation}
@@ -219,11 +255,11 @@ export default function Page() {
           }}
         >
           <span className="text-black text-xl font-semibold text-center">
-            {question?.question}
+            {question.question}
           </span>
         </motion.div>
 
-        {/* Cartas em leque */}
+        {/* CARTAS */}
         <div className="w-full flex justify-center items-end gap-0 mt-8 px-6 relative h-80 overflow-visible">
           {question.options.map((opt, index) => {
             if (removedOptions.includes(index)) return null;
@@ -243,7 +279,6 @@ export default function Page() {
                 initialRotate={rotate}
                 isFocused={focusedCard === index}
                 setFocusedCard={setFocusedCard}
-                // animação inicial de entrada das cartas
                 initialAnimation={{
                   y: 200,
                   rotate: rotate,
@@ -253,11 +288,11 @@ export default function Page() {
                   animateRotate: rotate,
                   delay: index * 0.2,
                 }}
-                // adicionando delay uniforme para flip no hover
-                hoverAnimation={{
-                  rotateY: 180, // flip para cima
-                  transition: { duration: 0.6, delay: 0 } // mesmo delay para todas
-                }}
+                style={{
+                  perspective: 1200,
+                  "--drop-volume": randomProps[index]?.volume ?? 0.3,
+                  "--drop-pitch": randomProps[index]?.pitch ?? 1,
+                } as React.CSSProperties}
               />
             );
           })}

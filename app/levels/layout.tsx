@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 export default function LevelsLayout({ children }: { children: React.ReactNode }) {
@@ -43,13 +43,12 @@ export default function LevelsLayout({ children }: { children: React.ReactNode }
 
     playAudio();
 
-    // Cleanup: pausa ao sair do layout
     return () => {
       audioRef.current?.pause();
     };
   }, [pathname]);
 
-  // Listener global para permitir tocar após o primeiro clique do usuário
+  // Listener para permitir tocar após o primeiro clique
   useEffect(() => {
     const handleFirstInteraction = () => {
       if (!audioRef.current) return;

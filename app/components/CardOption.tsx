@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 
 interface CardOptionProps {
   text: string;
@@ -33,22 +34,51 @@ export default function CardOption({
   initialAnimation,
   style = {},
 }: CardOptionProps) {
+  const hoverAudio = useRef<HTMLAudioElement | null>(null);
+  const dropAudio = useRef<HTMLAudioElement | null>(null);
+  const [dropVolume, setDropVolume] = useState(0.3);
+  const [dropPitch, setDropPitch] = useState(1);
+
+  // Som e valores só no client
+  useEffect(() => {
+    // Som do hover
+    hoverAudio.current = new Audio("/sounds/card_flip.wav");
+    hoverAudio.current.volume = 0.3;
+
+    // Som do drop
+    dropAudio.current = new Audio("/sounds/card_flip.wav");
+
+    // Gerar volume e pitch aleatórios
+    const volume = 0.25 + Math.random() * 0.1;
+    const pitch = 0.9 + Math.random() * 0.2;
+    setDropVolume(volume);
+    setDropPitch(pitch);
+
+    dropAudio.current.volume = volume;
+    dropAudio.current.playbackRate = pitch;
+
+    const timer = setTimeout(() => {
+      dropAudio.current?.play();
+    }, (initialAnimation?.delay ?? 0) * 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <motion.div
-      onMouseEnter={() => setFocusedCard(index)}
+      onMouseEnter={() => {
+        setFocusedCard(index);
+        hoverAudio.current?.play();
+      }}
       onMouseLeave={() => setFocusedCard(null)}
       initial={{
         y: initialAnimation?.y ?? 0,
         rotate: initialAnimation?.rotate ?? initialRotate,
-        opacity: initialAnimation?.opacity ?? 0,
+        opacity: 0, // fix SSR
       }}
       animate={{
-        y: isFocused
-          ? -30
-          : initialAnimation?.animateY ?? 0,
-        rotate: isFocused
-          ? 0
-          : initialAnimation?.animateRotate ?? initialRotate,
+        y: isFocused ? -30 : initialAnimation?.animateY ?? 0,
+        rotate: isFocused ? 0 : initialAnimation?.animateRotate ?? initialRotate,
         opacity: initialAnimation?.animateOpacity ?? 1,
         scale: isFocused ? 1.15 : 1,
       }}
@@ -59,10 +89,12 @@ export default function CardOption({
         delay: initialAnimation?.delay ?? 0,
       }}
       className="w-44 h-60 perspective cursor-pointer"
-      style={style}
+      style={{ ...style, "--drop-volume": dropVolume, "--drop-pitch": dropPitch } as React.CSSProperties}
     >
       <motion.div
-        onClick={() => { if (!disabled && isFocused) onClick(); }}
+        onClick={() => {
+          if (!disabled && isFocused) onClick();
+        }}
         className="relative w-full h-full"
         style={{ transformStyle: "preserve-3d", perspective: 1200 }}
       >
@@ -71,11 +103,11 @@ export default function CardOption({
           className="absolute w-full h-full rounded-xl flex items-center justify-center text-center font-bold text-[#2E1B00] shadow-lg"
           style={{
             backfaceVisibility: "hidden",
-            backgroundImage: "url('/textures/frente_card.jpg')",
+            backgroundImage: "url('/textures/minha_frente.jpg')",
             backgroundSize: "cover",
             backgroundPosition: "center",
             opacity: disabled ? 0.4 : 1,
-            border: "2px solid rgba(0,0,0,0.2)"
+            border: "2px solid rgba(0,0,0,0.2)",
           }}
           animate={{ rotateY: isFocused ? 0 : 180 }}
           transition={{ duration: 0.5 }}
