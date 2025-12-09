@@ -5,7 +5,7 @@ export default function page() {
       style={{ backgroundImage: "url('/texture.jpg')" }}
     >
       <div
-        className="w-4/5 h-[890px] bg-center bg-no-repeat"
+        className="w-full h-dvh bg-center bg-cover bg-no-repeat"
         style={{ backgroundImage: "url('/game-over.svg')" }}
       ></div>
     </div>

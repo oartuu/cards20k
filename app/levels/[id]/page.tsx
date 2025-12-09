@@ -21,7 +21,7 @@ export default function Page() {
   const [lives, setLives] = useState(3);
   const [removedOptions, setRemovedOptions] = useState<number[]>([]);
   const [disableAll, setDisableAll] = useState(false);
-  const [isCorrect, setIsCorrect] = useState(true);
+  const [isCorrect, setIsCorrect] = useState(false);
   const [isWrong, setIsWrong] =useState(false);
   const [feedback, setFeedback] = useState("");
   const question = phaseQuestions[current];
@@ -69,7 +69,9 @@ export default function Page() {
 
         } else {
           setRemovedOptions((prevArr) => [...prevArr, optionIndex]);
-          window.alert(`❌ Incorreto.\n\n${option.feedback || ""}`);
+          setIsWrong(true);
+          setFeedback(option.feedback || "");
+         // window.alert(`❌ Incorreto.\n\n${option.feedback || ""}`);
           return novo;
         }
       });
@@ -136,7 +138,7 @@ export default function Page() {
 
       {/* Área principal */}
       <main className="flex-4 flex flex-col justify-between items-center py-6 w-full">
-        <Dialog open={isCorrect} onOpenChange={setIsCorrect}>
+        <Dialog open={isCorrect } onOpenChange={setIsCorrect}>
           <DialogContent
             className="z-110 h-48 text-center"
             style={{
@@ -147,6 +149,21 @@ export default function Page() {
             }}
           >
             <DialogTitle>RESPOSTA CORRETA!!</DialogTitle>
+
+            <p>{feedback}</p>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={isWrong } onOpenChange={setIsWrong}>
+          <DialogContent
+            className="z-110 h-48 text-center"
+            style={{
+              backgroundImage: "url('/textures/papel_antigo_carta.jpg')",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }}
+          >
+            <DialogTitle>RESPOSTA INCORRETA!</DialogTitle>
 
             <p>{feedback}</p>
           </DialogContent>
