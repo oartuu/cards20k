@@ -6,6 +6,8 @@ import { questions, Question, Option } from "@/app/data/questions";
 import CardOption from "@/app/components/CardOption";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { DialogTitle } from "@radix-ui/react-dialog";
 
 export default function Page() {
   const { id } = useParams();
@@ -19,7 +21,9 @@ export default function Page() {
   const [lives, setLives] = useState(3);
   const [removedOptions, setRemovedOptions] = useState<number[]>([]);
   const [disableAll, setDisableAll] = useState(false);
-
+  const [isCorrect, setIsCorrect] = useState(true);
+  const [isWrong, setIsWrong] =useState(false);
+  const [feedback, setFeedback] = useState("");
   const question = phaseQuestions[current];
 
   function handleOptionClick(optionIndex: number) {
@@ -29,7 +33,9 @@ export default function Page() {
 
     if (option.correct) {
       setDisableAll(true);
-      window.alert(`✅ Correto!\n\n${option.feedback || ""}`);
+      setIsCorrect(true);
+      setFeedback(option.feedback || "");
+      //window.alert(`✅ Correto!\n\n${option.feedback || ""}`);
 
       if (current + 1 < phaseQuestions.length) {
         setCurrent((c) => c + 1);
@@ -86,39 +92,66 @@ export default function Page() {
     >
       {/* Lado esquerdo — vidas com imagem de fundo animada */}
       <aside className="flex-1 relative flex flex-col justify-center gap-6 overflow-visible">
-  {/* Fundo das engrenagens vindo da esquerda */}
-  <motion.div
-    initial={{ x: -300, opacity: 0 }}
-    animate={{ x: 0, opacity: 1 }}
-    transition={{ type: "spring", stiffness: 100, damping: 15, duration: 1.2 }}
-    className="absolute top-1/2 -translate-y-1/2 left-[-180px] z-0" // saiu mais pra esquerda
-  >
-    <Image
-      src="/images/fundo_engrenagens.png"
-      alt="fundo engrenagens"
-      width={320}   // largura menor
-      height={240}  // altura menor
-      priority
-    />
-  </motion.div>
+        {/* Fundo das engrenagens vindo da esquerda */}
+        <motion.div
+          initial={{ x: -300, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{
+            type: "spring",
+            stiffness: 100,
+            damping: 15,
+            duration: 1.2,
+          }}
+          className="absolute top-1/2 -translate-y-1/2 left-[-180px] z-0" // saiu mais pra esquerda
+        >
+          <Image
+            src="/images/fundo_engrenagens.png"
+            alt="fundo engrenagens"
+            width={320} // largura menor
+            height={240} // altura menor
+            priority
+          />
+        </motion.div>
 
-  {/* Engrenagens animadas */}
-  {Array.from({ length: 3 }).map((_, v) => (
-    <motion.img
-      key={v}
-      src={v < lives ? "/images/gear_orange.png" : "/images/gear_gray.png"}
-      alt="gear"
-      className="h-20 w-20 relative z-10"
-      initial={{ x: -200, opacity: 0 }}
-      animate={{ x: 0, opacity: 1, rotate: v < lives ? 360 : 0 }}
-      transition={{ type: "spring", stiffness: 120, damping: 12, duration: 1 }}
-    />
-  ))}
-</aside>
-
+        {/* Engrenagens animadas */}
+        {Array.from({ length: 3 }).map((_, v) => (
+          <motion.img
+            key={v}
+            src={
+              v < lives ? "/images/gear_orange.png" : "/images/gear_gray.png"
+            }
+            alt="gear"
+            className="h-20 w-20 relative z-10"
+            initial={{ x: -200, opacity: 0 }}
+            animate={{ x: 0, opacity: 1, rotate: v < lives ? 360 : 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 120,
+              damping: 12,
+              duration: 1,
+            }}
+          />
+        ))}
+      </aside>
 
       {/* Área principal */}
       <main className="flex-4 flex flex-col justify-between items-center py-6 w-full">
+        <Dialog open={isCorrect} onOpenChange={setIsCorrect}>
+          <DialogContent
+            className="z-110 h-48 text-center"
+            style={{
+              backgroundImage: "url('/textures/papel_antigo_carta.jpg')",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }}
+          >
+            <DialogTitle>RESPOSTA CORRETA!!</DialogTitle>
+
+            <p>{feedback}</p>
+          </DialogContent>
+        </Dialog>
+
         {/* Letreiro da pergunta estilo steampunk pendurado */}
         <motion.div
           initial={{ y: -200, opacity: 0 }}
@@ -129,10 +162,12 @@ export default function Page() {
             backgroundImage: "url('/textures/letreiro.jpg')",
             backgroundSize: "cover",
             backgroundPosition: "center",
-            backgroundRepeat: "no-repeat"
+            backgroundRepeat: "no-repeat",
           }}
         >
-          <span className="text-black text-xl font-semibold text-center">{question?.question}</span>
+          <span className="text-black text-xl font-semibold text-center">
+            {question?.question}
+          </span>
         </motion.div>
 
         {/* Cards */}
