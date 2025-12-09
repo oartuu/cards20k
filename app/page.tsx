@@ -1,5 +1,6 @@
 "use client";
 
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -42,23 +43,30 @@ export default function Home() {
             </Link>
 
             {/* BOTÃO MÉDIO - CRÉDITOS */}
-            <Link href="/">
-              <div
-                onMouseEnter={() => setHoverEffect(true)}
-                onMouseLeave={() => setHoverEffect(false)}
-                className="
+            <Sheet>
+              <SheetTrigger asChild>
+                <div
+                  onMouseEnter={() => setHoverEffect(true)}
+                  onMouseLeave={() => setHoverEffect(false)}
+                  className="
                   border-2 border-brand-primary font-bold text-xl text-brand-primary
                   px-6 py-4 w-48 text-center rounded-b-4xl cursor-pointer
                   transition-all duration-300
                   hover:scale-110 hover:shadow-xl hover:bg-brand-primary hover:text-black
                 "
-              >
-                CRÉDITOS
-              </div>
-            </Link>
+                >
+                  CRÉDITOS
+                </div>
+              </SheetTrigger>
+              <SheetContent className="border-2 border-r-0 rounded-l-xl border-brand-primary bg-brand-gray text-brand-light">
+                <SheetHeader>
+                  <SheetTitle className="text-brand-light">CRÉDITOS</SheetTitle>
+                </SheetHeader>
+              </SheetContent>
+            </Sheet>
 
             {/* BOTÃO PEQUENO - SAIR */}
-            <Link href="/">
+            <Link href="https://youtu.be/dQw4w9WgXcQ?si=Qk66UPnGTi8DqDSb">
               <div
                 onMouseEnter={() => setHoverEffect(true)}
                 onMouseLeave={() => setHoverEffect(false)}
