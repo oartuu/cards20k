@@ -159,7 +159,7 @@ export default function Page() {
           className="relative flex flex-col items-center w-full z-10 gap-6"
           style={{
             marginLeft: "-5px",
-            marginTop: "8px",
+            marginTop: "9px",
           }}
         >
           <h1
