@@ -4,7 +4,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-
 .font-game {
   font-family: 'Graduate', cursive;
 }
@@ -13,9 +12,7 @@
   perspective: 1000px;
 }
 
-
 @theme inline {
-
   --color-brand-light:#FFFCEE;
   --color-brand-primary:#F75C2E;
   --color-brand-gray:#3B3B3B;
@@ -70,6 +67,7 @@ body {
 
 :root {
   --radius: 0.625rem;
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
   --card: oklch(1 0 0);
@@ -97,12 +95,13 @@ body {
   --sidebar-foreground: oklch(0.141 0.005 285.823);
   --sidebar-primary: oklch(0.21 0.006 285.885);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+  --sidebar-accent: oklch(0.274 0.006 286.033);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.705 0.015 286.067);
 }
 
+/* Tema escuro */
 .dark {
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.985 0 0);
@@ -137,10 +136,8 @@ body {
   --sidebar-ring: oklch(0.552 0.016 285.938);
 }
 
+/* Base global */
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
   body {
     @apply bg-background text-foreground;
   }

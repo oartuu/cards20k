@@ -1,37 +1,69 @@
 "use client";
 
-import { useState } from "react";
-import { useParams, useRouter } from "next/navigation"; 
+import { useState, useRef, useEffect, useMemo } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { questions, Question, Option } from "@/app/data/questions";
 import CardOption from "@/app/components/CardOption";
-import { motion } from "framer-motion";
+import { motion, Transition } from "framer-motion";
 import Image from "next/image";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
 
+interface RandomProps {
+  volume: number;
+  pitch: number;
+}
+
 export default function Page() {
   const { id } = useParams();
   const phase = Number(id) || 1;
-  const router = useRouter(); 
+  const router = useRouter();
 
-  const TOTAL_PHASES = 4; 
-  const phaseQuestions: Question[] = questions.filter((q) => q.phase === phase);
+  const TOTAL_PHASES = 4;
+
+  const phaseQuestions: Question[] = useMemo(
+    () => questions.filter((q) => q.phase === phase),
+    [phase]
+  );
 
   const [current, setCurrent] = useState(0);
   const [lives, setLives] = useState(3);
   const [removedOptions, setRemovedOptions] = useState<number[]>([]);
   const [disableAll, setDisableAll] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [isWrong, setIsWrong] =useState(false);
+  const [isWrong, setIsWrong] = useState(false);
   const [isPhaseFinished, setIsPhaseFinished] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const [focusedCard, setFocusedCard] = useState<number | null>(null);
+  const [randomProps, setRandomProps] = useState<RandomProps[]>([]);
+
+  const correctAudioRef = useRef<HTMLAudioElement | null>(null);
+  const wrongAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    correctAudioRef.current = new Audio("/sounds/card_correct.mp3");
+    correctAudioRef.current.volume = 0.4;
+
+    wrongAudioRef.current = new Audio("/sounds/card_rip.wav");
+    wrongAudioRef.current.volume = 0.4;
+  }, []);
+
+  const question = phaseQuestions[current];
   const nextPhase = phase + 1;
 
-  const [feedback, setFeedback] = useState("");
-  const question = phaseQuestions[current];
+  // Gera valores aleatórios apenas quando current muda
+  useEffect(() => {
+    const props = phaseQuestions[current]?.options.map(() => ({
+      volume: 0.25 + Math.random() * 0.1,
+      pitch: 0.9 + Math.random() * 0.2,
+    }));
+    setRandomProps(props || []);
+  }, [current, phaseQuestions]);
 
   function handleOptionClick(optionIndex: number) {
     if (disableAll) return;
+
     const option: Option | undefined = question?.options[optionIndex];
     if (!option) return;
 
@@ -39,51 +71,42 @@ export default function Page() {
       setDisableAll(true);
       setIsCorrect(true);
       setFeedback(option.feedback || "");
-      //window.alert(`✅ Correto!\n\n${option.feedback || ""}`);
+      correctAudioRef.current?.play();
 
       if (current + 1 < phaseQuestions.length) {
-        setCurrent((c) => c + 1);
-        setRemovedOptions([]);
-        setDisableAll(false);
+        setTimeout(() => {
+          setCurrent((c) => c + 1);
+          setRemovedOptions([]);
+          setDisableAll(false);
+        }, 500);
       } else {
-        //const nextPhase = phase + 1;
         if (nextPhase <= TOTAL_PHASES) {
           setIsPhaseFinished(true);
-         //window.alert(`🎉 Você concluiu a Fase {phase}! Preparando para a Fase {nextPhase}...`);
-          //router.push(`/levels/${nextPhase}`); 
         } else {
-
-            // Todas as fases concluídas
-            setDisableAll(true);
-            router.push("/levels/finish")
-           
-
+          router.push("/levels/finish");
         }
       }
     } else {
       setLives((prev) => {
         const novo = prev - 1;
         if (novo <= 0) {
-        
           setCurrent(0);
           setRemovedOptions([]);
           setDisableAll(false);
           router.push("/levels/gameover");
           return 3;
-          
-
         } else {
           setRemovedOptions((prevArr) => [...prevArr, optionIndex]);
           setIsWrong(true);
           setFeedback(option.feedback || "");
-         // window.alert(`❌ Incorreto.\n\n${option.feedback || ""}`);
+          wrongAudioRef.current?.play();
           return novo;
         }
       });
     }
   }
 
-  if (phaseQuestions.length === 0) {
+  if (!question) {
     return (
       <div className="min-h-screen flex items-center justify-center font-game">
         <p>Nenhuma pergunta encontrada para a fase {phase}.</p>
@@ -91,114 +114,137 @@ export default function Page() {
     );
   }
 
+  const dropAnimation = { y: 0, opacity: 1 };
+  const initialDrop = { y: -200, opacity: 0 };
+  const dropTransition: Transition = { type: "spring", stiffness: 120, damping: 12 };
+
   return (
     <div
       key={phase}
-      className="flex min-h-screen w-dvw justify-between gap-4 font-game"
+      className="flex min-h-screen w-dvw justify-between gap-4 font-game overflow-hidden relative"
       style={{ backgroundImage: "url('/texture.jpg')" }}
     >
-      {/* Lado esquerdo — vidas com imagem de fundo animada */}
+      {/* VIDAS */}
       <aside className="flex-1 relative flex flex-col justify-center gap-6 overflow-visible">
-        {/* Fundo das engrenagens vindo da esquerda */}
         <motion.div
           initial={{ x: -300, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          transition={{
-            type: "spring",
-            stiffness: 100,
-            damping: 15,
-            duration: 1.2,
-          }}
-          className="absolute top-1/2 -translate-y-1/2 left-[-180px] z-0" // saiu mais pra esquerda
+          transition={{ type: "spring", stiffness: 100, damping: 15, duration: 1.2 }}
+          className="absolute top-1/2 -translate-y-1/2 left-[-180px] z-0"
         >
           <Image
-            src="/images/fundo_engrenagens.png"
-            alt="fundo engrenagens"
-            width={320} // largura menor
-            height={240} // altura menor
+            src="/images/fundo_engrena.png"
+            alt="fundo engrena"
+            width={280}
+            height={100}
             priority
           />
         </motion.div>
 
-        {/* Engrenagens animadas */}
         {Array.from({ length: 3 }).map((_, v) => (
           <motion.img
             key={v}
-            src={
-              v < lives ? "/images/gear_orange.png" : "/images/gear_gray.png"
-            }
+            src={v < lives ? "/images/gear_orange.png" : "/images/gear_gray.png"}
             alt="gear"
             className="h-20 w-20 relative z-10"
             initial={{ x: -200, opacity: 0 }}
             animate={{ x: 0, opacity: 1, rotate: v < lives ? 360 : 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 120,
-              damping: 12,
-              duration: 1,
-            }}
+            transition={{ type: "spring", stiffness: 120, damping: 12, duration: 1 }}
           />
         ))}
       </aside>
 
-      {/* Área principal */}
-      <main className="flex-4 flex flex-col justify-between items-center py-6 w-full">
+      {/* PERGUNTA + OPÇÕES */}
+      <main className="flex-4 flex flex-col justify-between items-center py-6 w-full relative">
+        {/* DIÁLOGOS DE FEEDBACK */}
         <Dialog open={isCorrect} onOpenChange={setIsCorrect}>
           <DialogContent
             className="z-110 h-48 text-center"
             style={{
-              backgroundImage: "url('/textures/papel_antigo_carta.jpg')",
+              backgroundImage: "url('/textures/mesa_western.jpg')",
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundRepeat: "no-repeat",
             }}
           >
             <DialogTitle>RESPOSTA CORRETA!!</DialogTitle>
-
             <p>{feedback}</p>
           </DialogContent>
         </Dialog>
+
         <Dialog open={isWrong} onOpenChange={setIsWrong}>
           <DialogContent
             className="z-110 h-48 text-center"
             style={{
-              backgroundImage: "url('/textures/papel_antigo_carta.jpg')",
+              backgroundImage: "url('/textures/mesa_western.jpg')",
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundRepeat: "no-repeat",
             }}
           >
             <DialogTitle>RESPOSTA INCORRETA!</DialogTitle>
-
             <p>{feedback}</p>
           </DialogContent>
         </Dialog>
+
         <Dialog open={isPhaseFinished} onOpenChange={setIsPhaseFinished}>
           <DialogContent
             className="z-110 h-48 text-center"
             style={{
-              backgroundImage: "url('/textures/papel_antigo_carta.jpg')",
+              backgroundImage: "url('/textures/mesa_western.jpg')",
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundRepeat: "no-repeat",
             }}
           >
             <DialogTitle>FIM DE FASE!</DialogTitle>
-
             <p>
-              Você concluiu a Fase {phase}! Preparando para a Fase {nextPhase}
-              ...
+              Você concluiu a Fase {phase}! Preparando para a Fase {nextPhase}...
             </p>
-            <Button onClick={() => router.push(`/levels/${nextPhase}`)}className="bg-brand-primary hover:bg-brand-primary-dark hover:cursor-pointer transition-colors duration-300">Próxima Fase</Button>
+            <Button
+              onClick={() => router.push(`/levels/${nextPhase}`)}
+              className="bg-brand-primary hover:bg-brand-primary-dark hover:cursor-pointer transition-colors duration-300"
+            >
+              Próxima Fase
+            </Button>
           </DialogContent>
         </Dialog>
 
-        {/* Letreiro da pergunta estilo steampunk pendurado */}
+        {/* CORRENTES */}
         <motion.div
-          initial={{ y: -200, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 120, damping: 12 }}
-          className="relative w-5/7 h-22 mt-4 flex items-center justify-center shadow-2xl"
+          initial={initialDrop}
+          animate={dropAnimation}
+          transition={{ ...dropTransition, delay: 0 }}
+          className="absolute z-30 top-0 left-[calc(50%-380px)]"
+        >
+          <Image
+            src="/images/corrente_esquerda.png"
+            alt="Corrente esquerda"
+            width={80}
+            height={300}
+          />
+        </motion.div>
+
+        <motion.div
+          initial={initialDrop}
+          animate={dropAnimation}
+          transition={{ ...dropTransition, delay: 0 }}
+          className="absolute z-30 top-0 right-[calc(50%-380px)]"
+        >
+          <Image
+            src="/images/corrente_direita.png"
+            alt="Corrente direita"
+            width={100}
+            height={350}
+          />
+        </motion.div>
+
+        {/* LETREIRO */}
+        <motion.div
+          initial={initialDrop}
+          animate={dropAnimation}
+          transition={dropTransition}
+          className="relative w-5/7 h-22 mt-4 flex items-center justify-center shadow-2xl z-20"
           style={{
             backgroundImage: "url('/textures/letreiro.jpg')",
             backgroundSize: "cover",
@@ -207,15 +253,19 @@ export default function Page() {
           }}
         >
           <span className="text-black text-xl font-semibold text-center">
-            {question?.question}
+            {question.question}
           </span>
         </motion.div>
 
-        {/* Cards */}
-        <div className="w-full flex flex-wrap justify-center items-center gap-6 mt-8 px-6 relative">
+        {/* CARTAS */}
+        <div className="w-full flex justify-center items-end gap-0 mt-8 px-6 relative h-80 overflow-visible">
           {question.options.map((opt, index) => {
-            const removed = removedOptions.includes(index);
-            if (removed) return null;
+            if (removedOptions.includes(index)) return null;
+
+            const total = question.options.length;
+            const fanSpread = 30;
+            const startAngle = -fanSpread / 2;
+            const rotate = startAngle + (fanSpread / (total - 1)) * index;
 
             return (
               <CardOption
@@ -224,7 +274,23 @@ export default function Page() {
                 onClick={() => handleOptionClick(index)}
                 disabled={disableAll}
                 index={index}
-                initialRotate={0}
+                initialRotate={rotate}
+                isFocused={focusedCard === index}
+                setFocusedCard={setFocusedCard}
+                initialAnimation={{
+                  y: 200,
+                  rotate: rotate,
+                  opacity: 0,
+                  animateY: 0,
+                  animateOpacity: 1,
+                  animateRotate: rotate,
+                  delay: index * 0.2,
+                }}
+                style={{
+                  perspective: 1200,
+                  "--drop-volume": randomProps[index]?.volume ?? 0.3,
+                  "--drop-pitch": randomProps[index]?.pitch ?? 1,
+                } as React.CSSProperties}
               />
             );
           })}
