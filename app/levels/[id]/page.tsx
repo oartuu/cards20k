@@ -37,6 +37,7 @@ export default function Page() {
   const [feedback, setFeedback] = useState("");
   const [focusedCard, setFocusedCard] = useState<number | null>(null);
   const [randomProps, setRandomProps] = useState<RandomProps[]>([]);
+  const [spinningGear, setSpinningGear] = useState<number | null>(null);
 
   const correctAudioRef = useRef<HTMLAudioElement | null>(null);
   const wrongAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -52,7 +53,6 @@ export default function Page() {
   const question = phaseQuestions[current];
   const nextPhase = phase + 1;
 
-  // Gera valores aleatórios apenas quando current muda
   useEffect(() => {
     const props = phaseQuestions[current]?.options.map(() => ({
       volume: 0.25 + Math.random() * 0.1,
@@ -60,6 +60,16 @@ export default function Page() {
     }));
     setRandomProps(props || []);
   }, [current, phaseQuestions]);
+
+  // Efeito para resetar animação após término
+  useEffect(() => {
+    if (spinningGear !== null) {
+      const timer = setTimeout(() => {
+        setSpinningGear(null);
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [spinningGear]);
 
   function handleOptionClick(optionIndex: number) {
     if (disableAll) return;
@@ -100,6 +110,11 @@ export default function Page() {
           setIsWrong(true);
           setFeedback(option.feedback || "");
           wrongAudioRef.current?.play();
+          
+          // Define qual engrenagem vai girar (a que está sendo perdida)
+          const gearToSpin = prev - 1; // Índice da engrenagem que está sendo perdida
+          setSpinningGear(gearToSpin);
+          
           return novo;
         }
       });
@@ -121,51 +136,86 @@ export default function Page() {
   return (
     <div
       key={phase}
-      className="flex min-h-screen w-dvw justify-between gap-4 font-game overflow-hidden relative"
+      className="flex flex-col lg:flex-row min-h-screen w-full justify-between gap-4 font-game overflow-hidden relative bg-cover bg-center"
       style={{ backgroundImage: "url('/texture.jpg')" }}
     >
-      {/* VIDAS */}
-      <aside className="flex-1 relative flex flex-col justify-center gap-6 overflow-visible">
-        <h1 className="absolute top-5 left-5 text-xl font-bold">Fase: {phase}-{current + 1}</h1>
-        <motion.div
-          initial={{ x: -300, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 100, damping: 15, duration: 1.2 }}
-          className="absolute top-1/2 -translate-y-1/2 left-[-180px] z-0"
-        >
+      {/* =============== DESKTOP PANEL (LEFT) =============== */}
+      <aside
+        className="hidden lg:flex flex-col items-center justify-start pt-10 relative"
+        style={{ width: "240px", transform: "translateX(-30px)" }}
+      >
+        {/* Fundo do painel (MENOR) */}
+        <div className="absolute top-0 left-0 h-full w-[240px]">
           <Image
             src="/images/fundo_engrena.png"
-            alt="fundo engrena"
-            width={280}
-            height={100}
-            priority
+            alt="Painel"
+            fill
+            style={{ objectFit: "cover" }}
           />
-        </motion.div>
+        </div>
 
-        {Array.from({ length: 3 }).map((_, v) => (
-          <motion.img
-            key={v}
-            src={v < lives ? "/images/gear_orange.png" : "/images/gear_gray.png"}
-            alt="gear"
-            className="h-20 w-20 relative z-10"
-            initial={{ x: -200, opacity: 0 }}
-            animate={{ x: 0, opacity: 1, rotate: v < lives ? 360 : 0 }}
-            transition={{ type: "spring", stiffness: 120, damping: 12, duration: 1 }}
-          />
-        ))}
+        {/* Conteúdo sobreposto */}
+        <div
+          className="relative flex flex-col items-center w-full z-10 gap-6"
+          style={{
+            marginLeft: "-5px",
+            marginTop: "8px",
+          }}
+        >
+          <h1
+            className="text-2xl font-bold text-black drop-shadow-lg"
+            style={{ marginTop: "-8px" }}
+          >
+            Fase {phase}-{current + 1}
+          </h1>
+
+          {/* Engrenagens */}
+          {Array.from({ length: 3 }).map((_, v) => {
+            const isSpinning = spinningGear === v;
+            const isActive = v < lives;
+            
+            return (
+              <motion.div
+                key={v}
+                animate={
+                  isSpinning
+                    ? {
+                        rotate: 360,
+                      }
+                    : {}
+                }
+                transition={
+                  isSpinning
+                    ? {
+                        rotate: {
+                          duration: 0.5,
+                          ease: "easeInOut",
+                        },
+                      }
+                    : {}
+                }
+              >
+                <Image
+                  src={isActive ? "/images/gear_orange.png" : "/images/gear_gray.png"}
+                  alt="gear"
+                  width={100}
+                  height={100}
+                />
+              </motion.div>
+            );
+          })}
+        </div>
       </aside>
 
-      {/* PERGUNTA + OPÇÕES */}
-      <main className="flex-4 flex flex-col justify-between items-center py-6 w-full relative">
-        {/* DIÁLOGOS DE FEEDBACK */}
+      {/* ================= CONTEÚDO CENTRAL ================= */}
+      <main className="flex-1 flex flex-col justify-start items-center py-6 w-full relative">
+        {/* FEEDBACKS */}
         <Dialog open={isCorrect} onOpenChange={setIsCorrect}>
           <DialogContent
             className="z-110 h-48 text-center"
             style={{
               backgroundImage: "url('/textures/mesa_western.jpg')",
               backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
             }}
           >
             <DialogTitle>RESPOSTA CORRETA!!</DialogTitle>
@@ -179,8 +229,6 @@ export default function Page() {
             style={{
               backgroundImage: "url('/textures/mesa_western.jpg')",
               backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
             }}
           >
             <DialogTitle>RESPOSTA INCORRETA!</DialogTitle>
@@ -194,17 +242,13 @@ export default function Page() {
             style={{
               backgroundImage: "url('/textures/mesa_western.jpg')",
               backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
             }}
           >
             <DialogTitle>FIM DE FASE!</DialogTitle>
-            <p>
-              Você concluiu a Fase {phase}! Preparando para a Fase {nextPhase}...
-            </p>
+            <p>Você concluiu a Fase {phase}! Prepare-se para {nextPhase}...</p>
             <Button
               onClick={() => router.push(`/levels/${nextPhase}`)}
-              className="bg-brand-primary hover:bg-brand-primary-dark hover:cursor-pointer transition-colors duration-300"
+              className="mt-2 bg-brand-primary hover:bg-brand-primary-dark"
             >
               Próxima Fase
             </Button>
@@ -215,13 +259,12 @@ export default function Page() {
         <motion.div
           initial={initialDrop}
           animate={dropAnimation}
-          transition={{ ...dropTransition, delay: 0 }}
-          className="absolute  top-0 left-[calc(50%-380px)]"
+          className="hidden lg:block absolute top-0 left-[18%]"
         >
           <Image
             src="/images/corrente_esquerda.png"
-            alt="Corrente esquerda"
-            width={80}
+            alt="Corrente"
+            width={90}
             height={300}
           />
         </motion.div>
@@ -229,14 +272,13 @@ export default function Page() {
         <motion.div
           initial={initialDrop}
           animate={dropAnimation}
-          transition={{ ...dropTransition, delay: 0 }}
-          className="absolute  top-0 right-[calc(50%-380px)]"
+          className="hidden lg:block absolute top-0 right-[18%]"
         >
           <Image
             src="/images/corrente_direita.png"
-            alt="Corrente direita"
-            width={100}
-            height={350}
+            alt="Corrente"
+            width={120}
+            height={300}
           />
         </motion.div>
 
@@ -245,21 +287,16 @@ export default function Page() {
           initial={initialDrop}
           animate={dropAnimation}
           transition={dropTransition}
-          className="relative w-5/7 h-22 mt-4 flex items-center justify-center shadow-2xl z-20"
-          style={{
-            backgroundImage: "url('/textures/letreiro.jpg')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-          }}
+          className="relative w-[90%] max-w-[850px] min-h-[95px] mt-10 px-4 flex items-center justify-center text-center shadow-xl bg-center bg-cover"
+          style={{ backgroundImage: "url('/textures/letreiro.jpg')" }}
         >
-          <span className="text-black text-xl font-semibold text-center">
+          <span className="text-black text-xl md:text-2xl font-semibold">
             {question.question}
           </span>
         </motion.div>
 
         {/* CARTAS */}
-        <div className="w-full flex justify-center items-end gap-0 mt-8 px-6 relative h-80 overflow-visible">
+        <div className="w-full flex flex-wrap justify-center items-end gap-4 mt-16 px-2 relative min-h-[300px]">
           {question.options.map((opt, index) => {
             if (removedOptions.includes(index)) return null;
 
@@ -280,7 +317,7 @@ export default function Page() {
                 setFocusedCard={setFocusedCard}
                 initialAnimation={{
                   y: 200,
-                  rotate: rotate,
+                  rotate,
                   opacity: 0,
                   animateY: 0,
                   animateOpacity: 1,
@@ -295,6 +332,49 @@ export default function Page() {
               />
             );
           })}
+        </div>
+
+        {/* MOBILE: VIDAS */}
+        <div className="flex flex-col items-center gap-2 mt-6 lg:hidden">
+          <h1 className="text-lg font-bold text-black">
+            Fase {phase}-{current + 1}
+          </h1>
+          <div className="flex gap-2">
+            {Array.from({ length: 3 }).map((_, v) => {
+              const isSpinning = spinningGear === v;
+              const isActive = v < lives;
+              
+              return (
+                <motion.div
+                  key={v}
+                  animate={
+                    isSpinning
+                      ? {
+                          rotate: 360,
+                        }
+                      : {}
+                  }
+                  transition={
+                    isSpinning
+                      ? {
+                          rotate: {
+                            duration: 0.5,
+                            ease: "easeInOut",
+                          },
+                        }
+                      : {}
+                  }
+                >
+                  <Image
+                    src={isActive ? "/images/gear_orange.png" : "/images/gear_gray.png"}
+                    alt="gear"
+                    width={60}
+                    height={60}
+                  />
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
       </main>
     </div>
