@@ -39,7 +39,7 @@ export default function Home() {
                   hover:scale-110 hover:shadow-xl hover:bg-brand-primary hover:text-black
                 "
               >
-                REINICIAR 
+                REINICIAR
               </div>
             </Link>
 
@@ -61,8 +61,50 @@ export default function Home() {
               </SheetTrigger>
               <SheetContent className="border-2 border-r-0 rounded-l-xl border-brand-primary bg-brand-gray text-brand-light">
                 <SheetHeader>
-                  <SheetTitle className="text-brand-light">CRÉDITOS</SheetTitle>
+                  <SheetTitle className="text-brand-light text-2xl">CRÉDITOS</SheetTitle>
                 </SheetHeader>
+                <div className="p-4 space-y-4">
+                  <h1 className="text-xl">
+                    <span className="font-bold">
+                      Arthur do Nascimento Penaforte:
+                    </span>
+                    Desenvolvedor Front-End.
+                  </h1>
+                  <h1 className="text-xl">
+                    <span className="font-bold">
+                      Hugo Henrique Andrade Lima:
+                    </span>
+                    Diretor de Arte e Designer.
+                  </h1>
+                  <h1 className="text-xl">
+                    <span className="font-bold">
+                      Ivisson Pereira Do Nascimento Alves:
+                    </span>
+                    Arquiteto de software.
+                  </h1>
+                  <h1 className="text-xl">
+                    <span className="font-bold">
+                      João Guilherme Nemesio Beltrão:
+                    </span>
+                    Desenvolvedor Front-End.
+                  </h1>
+                  <h1 className="text-xl">
+                    <span className="font-bold">
+                      Pedro Augusto Veiga Pessoa De Araújo:
+                    </span>
+                    QA.
+                  </h1>
+                  <h1 className="text-xl">
+                    <span className="font-bold">
+                      Pedro Guedes Lunguinho Silva:
+                    </span>
+                    Game Design.
+                  </h1>
+                  <h1 className="text-xl">
+                    <span className="font-bold">Túlio Lemos Cabral: </span>
+                    Gestor de projeto e QA.
+                  </h1>
+                </div>
               </SheetContent>
             </Sheet>
 

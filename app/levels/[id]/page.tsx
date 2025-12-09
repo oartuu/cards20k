@@ -126,6 +126,7 @@ export default function Page() {
     >
       {/* VIDAS */}
       <aside className="flex-1 relative flex flex-col justify-center gap-6 overflow-visible">
+        <h1 className="absolute top-5 left-5 text-xl font-bold">Fase: {phase}-{current + 1}</h1>
         <motion.div
           initial={{ x: -300, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -215,7 +216,7 @@ export default function Page() {
           initial={initialDrop}
           animate={dropAnimation}
           transition={{ ...dropTransition, delay: 0 }}
-          className="absolute z-30 top-0 left-[calc(50%-380px)]"
+          className="absolute  top-0 left-[calc(50%-380px)]"
         >
           <Image
             src="/images/corrente_esquerda.png"
@@ -229,7 +230,7 @@ export default function Page() {
           initial={initialDrop}
           animate={dropAnimation}
           transition={{ ...dropTransition, delay: 0 }}
-          className="absolute z-30 top-0 right-[calc(50%-380px)]"
+          className="absolute  top-0 right-[calc(50%-380px)]"
         >
           <Image
             src="/images/corrente_direita.png"
